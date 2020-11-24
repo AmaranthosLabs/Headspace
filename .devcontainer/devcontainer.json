@@ -1,0 +1,53 @@
+{
+	"name": "Headspace",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": { 
+			// Update 'VARIANT' to pick a .NET Core version: 2.1, 3.1, 5.0
+			"VARIANT": "5.0",
+			// Options
+			"INSTALL_NODE": "false",
+			"NODE_VERSION": "lts/*",
+			"INSTALL_AZURE_CLI": "false",
+			"UPGRADE_PACKAGES": "false"
+		}
+	},
+
+	// Set container specific defaults for F# in .NET (Core) 2.1+
+	"settings": {
+		"terminal.integrated.shell.linux": "/bin/bash",
+		"FSharp.fsacRuntime": "netcore",
+		"FSharp.useSdkScripts": true
+	},
+
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+        "spencer-farley.xunitsnippets",
+        "formulahendry.dotnet",
+		"alexkrechik.cucumberautocomplete",
+		"stevejpurves.cucumber",
+		"amillard98.specflow-tools",
+		"docsmsft.docs-markdown",
+		"koehlma.markdown-math",
+		"james-yu.latex-workshop",
+		"searking.preview-vscode",
+		"geeklearningio.graphviz-markdown-preview",
+		"ms-dotnettools.csharp",
+		"ms-dotnettools.dotnet-interactive-vscode",
+		"ms-dotnettools.vscode-dotnet-runtime",
+        "ionide.ionide-fsharp",
+        "ionide.ionide-fake",
+        "ionide.ionide-paket",
+		//"ms-vscode.powershell",
+		"ms-vscode.powershell-preview"
+	],
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "dotnet restore",
+
+	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "vscode"
+}
