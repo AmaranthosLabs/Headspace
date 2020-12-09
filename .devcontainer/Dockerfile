@@ -1,83 +1,60 @@
-# Headspace Dockerfile
-# this will run the Slipstream process in a container, 
-# Slipstreams are isolated by Concept and 
-# make heavy use of the Sidecar Pattern 
+# Headspace Dockerfile 
 
-# repository to pull from
+# repository to pull from - Microsoft Dotnet 5, Asp.Net
 ARG REPO=mcr.microsoft.com/dotnet/aspnet
 
-# (image we want from the repo: debian 10)
+# Image we want from the repo: debian 10 - Slim see: https://stackoverflow.com/questions/59794891/how-does-debian-differ-from-debian-slim
 FROM $REPO:5.0-buster-slim-amd64
 
-# set our envoironment variables
-   # Enable correct mode for dotnet watch (only mode supported in a container)
+# [Option] Install dotnet
+ARG INSTALL_DOTNET5="true"
+# [Option] Upgrade OS packages to their latest versions
+ARG UPGRADE_PACKAGES="true"
+# [Option] Enable non-root Docker access in container
+ARG ENABLE_NONROOT_DOCKER="true"
+# [Option] Set the default OMZ theme
+ARG OMZ_THEME="powerline"
 
+# Install needed packages and setup non-root user. Use a separate RUN statement to add your own dependencies.
+ARG SOURCE_SOCKET=/var/run/docker-host.sock
+ARG TARGET_SOCKET=/var/run/docker.sock
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+COPY library-scripts/*.sh /tmp/library-scripts/
+COPY dotfiles/* /tmp/dotfiles/
+
+# Enable correct mode for dotnet watch (only mode supported in a container)
 ENV DOTNET_USE_POLLING_FILE_WATCHER=true \
     # Skip extraction of XML docs - generally not useful within an image/container - helps performance
     NUGET_XMLDOC_MODE=skip \
     # PowerShell telemetry for docker image usage
     POWERSHELL_DISTRIBUTION_CHANNEL=PSDocker-DotnetSDK-Debian-10
-
-# This Dockerfile adds a non-root 'vscode' user with sudo access. However, for Linux,
-# this user's GID/UID must match your local user UID/GID to avoid permission issues
-# with bind mounts. Update USER_UID / USER_GID if yours is not 1000. See
-# https://aka.ms/vscode-remote/containers/non-root-user for details.
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-
+    
 # get Microsoft Repos
 
-# install utils
+# install utils for setup
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update && apt install -y --no-install-recommends \
-        apt-utils curl wget sudo uidmap \
-    #
-    && wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
-    && sudo dpkg -i packages-microsoft-prod.deb \
-    #
-    && apt-get update && apt-get install -y --no-install-recommends \        
-        git git-man less libbsd0 libcurl3-gnutls libedit2 \
-        libc6 libgcc1 libgssapi-krb5-2 libicu63 libssl1.1 libstdc++6 \
-        liberror-perl libexpat1 libgdbm-compat4 libgdbm6 \
-        libpcre2-8-0 libperl5.28 libx11-6 libx11-data \
-        libxau6 libxcb1 libxdmcp6 libxext6 libxmuu1 netbase \
-        openssh-client patch perl perl-modules-5.28 xauth zlib1g \
-    #
-    && rm -rf /var/lib/apt/lists/* \
-    #
-    # this requires uidmap above
-    # Create a non-root user to use - see https://aka.ms/vscode-remote/containers/non-root-user.
-    && groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    #
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
+    apt-utils curl wget sudo uidmap apt-transport-https ca-certificates lsb-release gnupg2
     
-#
-# Install .NET SDK
-# we just use APT, over curl, if you want nightlies, make a branch.'
-# we need 3.1 for notebooks for now
-RUN export DEBIAN_FRONTEND=noninteractive \
-    && apt-get update && apt-get install -y \
-            dotnet-sdk-3.1 \
-            dotnet-sdk-5.0 \
-            powershell \
-    # install the tools we know we want
-    # see dotnet-tools.json
-    # && dotnet tool restore
-    #
-    # these go here:
-    # Global tools are installed in the following directories by default when you specify the -g or --global option:
-    # Linux/macOS:  $HOME/.dotnet/tools
-    # Windows:      %USERPROFILE%\.dotnet\tools
-    #
-    # this is the old way, we need to set the json in .config
-    && dotnet tool install -g dotnet-script \
-    # add API tooling
-    && dotnet tool install -g APIPort \
-    # add conversion utility for Dotnet Framework conversion
-    && dotnet tool install -g try-convert \
-    # add Project Tye
-    && dotnet tool install -g Microsoft.Tye --version "0.6.0-*" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet5/nuget/v3/index.json
+RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && sudo dpkg -i packages-microsoft-prod.deb
+    
+# Setup OS 
+RUN sudo apt-get update \
+    && sudo /bin/bash -c /tmp/scripts/setup-os.sh "${UPGRADE_PACKAGES}"
 
+# setup user
+RUN /tmp/scripts/setup-user.sh "${USERNAME}" 
+
+# Use Docker script from script library to set up docker (inside this container)
+RUN sudo /bin/bash -c /tmp/scripts/setup-docker.sh "${SOURCE_SOCKET}" "${TARGET_SOCKET}"
+
+# Use Dotnet script from script library to set things up
+RUN sudo /bin/bash -c /tmp/scripts/setup-dotnet.sh "${INSTALL_DOTNET}" "${USERNAME}"
+
+# Clean up
+RUN sudo apt-get autoremove -y \
+    && sudo apt-get clean -y \
+    && sudo rm -rf /var/lib/apt/lists/* /tmp/scripts/

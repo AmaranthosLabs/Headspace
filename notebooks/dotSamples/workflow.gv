@@ -1,0 +1,13 @@
+digraph G {
+  rankdir="LR"; // Set the layout to horizontal
+
+  //Define the nodes
+  L [label="Locked",shape=circle,style=filled,fillcolor=crimson];
+  UL [label="Un-locked",shape=circle,style=filled,fillcolor=limegreen];
+
+  //Define the edges
+  L -> UL [label="Token"];
+  UL -> L [label="Validate"];
+  UL -> UL [label="Token Validated"];
+  L -> L [label="Submit"];
+}

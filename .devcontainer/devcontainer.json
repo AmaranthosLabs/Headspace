@@ -33,6 +33,8 @@
 		"james-yu.latex-workshop",
 		"searking.preview-vscode",
 		"geeklearningio.graphviz-markdown-preview",
+		"tomoyukim.vscode-mermaid-editor",
+		"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
 		"ms-dotnettools.csharp",
 		"ms-dotnettools.dotnet-interactive-vscode",
 		"ms-dotnettools.vscode-dotnet-runtime",
@@ -44,7 +46,7 @@
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	"forwardPorts": [8888],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "dotnet restore",
