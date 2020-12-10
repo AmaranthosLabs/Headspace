@@ -2,7 +2,7 @@
 
 ## Headspace Environment
 This is an environment intent on experimentation.
-We need to be able to quickly evaluate an idea and start expressing that in terms of Domains, Concepoots and Events
+We need to be able to quickly evaluate an idea and start expressing that in terms of Domains, Concepts and Events
 
 In order to evaluate this flow we have an environment in which to evaluate the need, discuss the behaviors with colleagues, and project a model. This model can be shared and modified at will.
 

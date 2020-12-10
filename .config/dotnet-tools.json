@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-script": {
+      "version": "1.0.1",
+      "commands": [
+        "dotnet-script"
+      ]
+    },
+    "apiport": {
+      "version": "2.8.14",
+      "commands": [
+        "ApiPort"
+      ]
+    },
+    "try-convert": {
+      "version": "0.7.160902",
+      "commands": [
+        "try-convert"
+      ]
+    },
+    "microsoft.tye": {
+      "version": "0.5.0-alpha.20555.1",
+      "commands": [
+        "tye"
+      ]
+    }
+  }
+}
