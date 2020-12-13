@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------------------------------------
 # Copyright (c) Amaranthos Labs, LLC. All rights reserved.
+# extended from:
+# Copyright (c) Amaranthos Labs, LLC. All rights reserved.
 # Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
 #-------------------------------------------------------------------------------------------------------------
 #
@@ -13,6 +15,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 SOURCE_SOCKET=${1:-"/var/run/docker-host.sock"}
 TARGET_SOCKET=${2:-"/var/run/docker.sock"}
+USERNAME=${3:-"vscode"}
 
 set -e
 
@@ -69,14 +72,7 @@ if [ "${SOURCE_SOCKET}" != "${TARGET_SOCKET}" ]; then
     ln -s "${SOURCE_SOCKET}" "${TARGET_SOCKET}"
 fi
 
-# Add a stub if not adding non-root user access, user is root
-if [ "${ENABLE_NONROOT_DOCKER}" = "false" ] || [ "${USERNAME}" = "root" ]; then
-    echo '/usr/bin/env bash -c "\$@"' > /usr/local/share/docker-init.sh
-    chmod +x /usr/local/share/docker-init.sh
-    exit 0
-fi
-
-# If enabling non-root access and specified user is found, setup socat and add script
+# Setup socat and add script
 chown -h "${USERNAME}":root "${TARGET_SOCKET}"        
 if ! dpkg -s socat > /dev/null 2>&1; then
     apt-get-update-if-needed
@@ -149,5 +145,5 @@ set +e
 exec "\$@"
 EOF
 chmod +x /usr/local/share/docker-init.sh
-chown ${USERNAME}:root /usr/local/share/docker-init.sh
-echo "Done!"
+chown ${USERNAME}:${USERNAME} /usr/local/share/docker-init.sh
+echo "Setting up Docker done."

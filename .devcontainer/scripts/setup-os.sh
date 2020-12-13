@@ -6,21 +6,17 @@
 #
 # Docs: https://github.com/amaranthoslabs/headspace/blob/main/.devcontainer/scripts/scripts.md
 #
-# Syntax: ./common-debian.sh [install zsh flag] [username] [user UID] [user GID] [upgrade packages flag] [install Oh My *! flag] [Oh My Theme *! flag]
+# Syntax: ./setup-os.sh [install dotnet pkgs] [upgrade packages flag]
 
 # Ensure apt is in non-interactive to avoid prompts
 export DEBIAN_FRONTEND=noninteractive
 
-UPGRADE_PACKAGES=${1:-"true"}
-OMZ_THEME=${2:-"powerline"}
+INSTALL_DOTNET_PKGS=${1:-"dotnet-sdk-3.1 dotnet-sdk-5.0 powershell"}
+UPGRADE_PACKAGES=${2:-"true"}
 
 USERNAME="vscode"
 USER_UID="1000"
 USER_GID="1000"
-
-# set a list of completed tasks
-# we will control this with events when we have gossip (https://en.wikipedia.org/wiki/Gossip_protocol) defined
-MARKER_FILE="/usr/local/etc/vscode-dev-containers/tasklog"
 
 set -e
 
@@ -28,20 +24,6 @@ main() {
     if [ "$(id -u)" -ne 0 ]; then
         echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
         exit 1
-    fi
-
-    # tasklog will set flags if completed
-    load_tasklog
-
-}
-
-
-# Load markers to see which steps have already run
-load_markerfile() {
-    if [ -f "${MARKER_FILE}" ]; then
-        echo "Marker file found:"
-        cat "${MARKER_FILE}"
-        source "${MARKER_FILE}"
     fi
 }
 
@@ -57,10 +39,10 @@ apt-get-update-if-needed()
 }
 
 # Run install apt-utils to avoid debconf warning then verify presence of other common developer tools and dependencies
-if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
     apt-get-update-if-needed
 
-    PACKAGE_LIST="apt-utils \
+    PACKAGE_LIST="$INSTALL_DOTNET_PKGS \
+        apt-utils \
         original-awk \
         build-essential \
         git \
@@ -97,7 +79,9 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
         ncdu \
         man-db \
         sed \
-        strace"
+        strace \
+        zsh \
+        zsh-common"
 
     # Install libssl1.1 if available
     if [[ ! -z $(apt-cache --names-only search ^libssl1.1$) ]]; then
@@ -118,9 +102,6 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
 
     echo "Packages to verify are installed: ${PACKAGE_LIST}"
     apt-get -y install --no-install-recommends ${PACKAGE_LIST} 2> >( grep -v 'debconf: delaying package configuration, since apt-utils is not installed' >&2 )
-        
-    PACKAGES_ALREADY_INSTALLED="true"
-fi
 
 # Get to latest versions of all packages
 if [ "${UPGRADE_PACKAGES}" = "true" ]; then
@@ -131,21 +112,9 @@ fi
 
 # Ensure at least the en_US.UTF-8 UTF-8 locale is available.
 # Common need for both applications and things like the agnoster ZSH theme.
-if [ "${LOCALE_ALREADY_SET}" != "true" ] && ! grep -o -E '^\s*en_US.UTF-8\s+UTF-8' /etc/locale.gen > /dev/null; then
-    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen 
-    locale-gen
-    LOCALE_ALREADY_SET="true"
-fi
+echo "America/Phoenix" > /etc/timezone
+dpkg-reconfigure tzdata
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen 
+locale-gen
 
-# Write marker file
-
-echo "Writing Markers..."
-mkdir -p "$(dirname "${MARKER_FILE}")"
-echo -e "\
-    PACKAGES_ALREADY_INSTALLED=${PACKAGES_ALREADY_INSTALLED}\n\
-    LOCALE_ALREADY_SET=${LOCALE_ALREADY_SET}\n\
-    EXISTING_NON_ROOT_USER=${EXISTING_NON_ROOT_USER}\n\
-    RC_SNIPPET_ALREADY_ADDED=${RC_SNIPPET_ALREADY_ADDED}\n\
-    ZSH_ALREADY_INSTALLED=${ZSH_ALREADY_INSTALLED}" > "${MARKER_FILE}"
-
-echo "Done!"
+echo -e "OS Setup Done..."

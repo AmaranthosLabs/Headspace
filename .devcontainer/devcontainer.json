@@ -1,6 +1,6 @@
 // Copyright 2020 Amaranthos Labs, LLC - All rights reserved
 {
-	"name": "Headspace",
+	"name": "Dotnet.Interactive Development",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": { 
@@ -10,13 +10,13 @@
 			"INSTALL_NODE": "false",
 			"NODE_VERSION": "lts/*",
 			"INSTALL_AZURE_CLI": "false",
-			"UPGRADE_PACKAGES": "false"
+			"UPGRADE_PACKAGES": "true"
 		}
 	},
 
 	// Set container specific defaults for F# in .NET (Core) 2.1+
 	"settings": {
-		"terminal.integrated.shell.linux": "/bin/bash",
+		"terminal.integrated.shell.linux": "/bin/zsh",
 		"FSharp.fsacRuntime": "netcore",
 		"FSharp.useSdkScripts": true
 	},
@@ -25,17 +25,13 @@
 	"extensions": [
         "spencer-farley.xunitsnippets",
         "formulahendry.dotnet",
-		"alexkrechik.cucumberautocomplete",
-		"stevejpurves.cucumber",
-		"amillard98.specflow-tools",
 		"docsmsft.docs-markdown",
-		"koehlma.markdown-math",
-		"james-yu.latex-workshop",
 		"searking.preview-vscode",
 		"geeklearningio.graphviz-markdown-preview",
 		"tomoyukim.vscode-mermaid-editor",
 		"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
 		"ms-dotnettools.csharp",
+		"gordonwalkedby.vbnet",
 		"ms-dotnettools.dotnet-interactive-vscode",
 		"ms-dotnettools.vscode-dotnet-runtime",
         "ionide.ionide-fsharp",

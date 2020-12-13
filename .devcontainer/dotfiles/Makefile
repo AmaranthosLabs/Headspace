@@ -1,15 +1,36 @@
 ### Makefile to Symlink Dotfiles for the vscode user in /home/vscode
 SHELL := bash
 
-.PHONY: all
-all: dotfiles  ## Installs the bin and etc directory files with the dotfiles.
+.PHONY: default
+default: dotfiles dotnet-restore
 
 .PHONY: zsh
 zsh: ## Ensures zsh is setup
+	THEME="powerline" \
+	# clone if set \
+	THEME_URL="powerline" \
+	if [${THEME_URL} != ""] \
+		get-theme \ 
+	fi \
     ZSH=${ZSH:-/home/${USERNAME}/.oh-my-zsh} \
-	sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh) --unattended" \
-    sed -i -e 's/ZSH_THEME=.*/ZSH_THEME="'agnoster'"/g' ~/.zshrc \
+	curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh . --unattended \
+    sed -i -e 's/ZSH_THEME=.*/ZSH_THEME="'${THEME}'"/g' ~/.zshrc \
+	rm .install.sh \
     echo "installed ohmyzsh."
+
+.PHONY: get-theme
+get-theme:
+	cd /home/${USERNAME}/.oh-my-zsh/themes
+	wget https://raw.githubusercontent.com/jeremyFreeAgent/oh-my-zsh-powerline-theme/master/powerline.zsh-theme
+	cd /home/${USERNAME}
+## We are getting universal fonts that work for powerline in the os
+# .PHONY: fonts
+# fonts: ## Install fonts we want, we should make these modules...
+# 	#this is a lengthy process, we need checks first.
+# 	ifdef($(shell find $(CURDIR)/.fonts -type f);) do \
+# 		#dir exists, do something
+		
+# 	endif
 
 .PHONY: bin
 bin: ## Installs the local user bin folder.
@@ -26,6 +47,7 @@ dotfiles: ## Installs the dotfiles.
 		f=$$(basename $$file); \
 		ln -sfn $$file $(HOME)/$$f; \
 	done; 
+
 	# Gnu Privacy Guard and SSH Keys
 	# gpg --list-keys || true;
 	# mkdir -p $(HOME)/.gnupg
@@ -33,13 +55,19 @@ dotfiles: ## Installs the dotfiles.
 	# 	f=$$(basename $$file); \
 	# 	ln -sfn $$file $(HOME)/.gnupg/$$f; \
 	# done; 
-	ln -fn $(CURDIR)/gitignore $(HOME)/.gitignore;
+	ln -snf $(CURDIR)/gitignore $(HOME)/.gitignore;
+	mkdir -p $(HOME)/.config;
+	ln -snf $(CURDIR)/dotnet-tools.json $(HOME)/.config/dotnet-tools.json;
 
-	git update-index --skip-worktree $(CURDIR)/.gitconfig;
+	# git update-index --skip-worktree $(CURDIR)/.gitconfig;
 	# cd mkdir -p $(HOME)/.config;
 	# mkdir -p $(HOME)/.local/share;
 	# ln -snf $(CURDIR)/.fonts $(HOME)/.local/share/fonts;
 	ln -snf $(CURDIR)/.bash_profile $(HOME)/.profile;
+
+.PHONY: dotnet-restore
+dotnet-restore: ##Restore user tools
+	dotnet tool restore
 
 .PHONY: etc
 etc: ## Installs the etc directory files.
@@ -57,6 +85,12 @@ usr: ## Installs the usr directory files.
 		sudo mkdir -p $$(dirname $$f); \
 		sudo ln -f $$file $$f; \
 	done
+
+.PHONY: clean
+clean: ## Remove only the links in the dotfiles folder 
+	cd /home/vscode
+	find -type l | while IFS= read -r lnk; do if (readlink "$lnk" | grep -q '^/home/vscode/dotfiles/'); then rm "$lnk"; fi; done
+
 
 .PHONY: shellcheck
 shellcheck: ## Runs the shellcheck tests on the scripts.
